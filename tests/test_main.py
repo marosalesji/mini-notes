@@ -1,5 +1,14 @@
 from datetime import date
-from app.main import add_note, filter_by_date, remove_note, NoteIn
+from fastapi.testclient import TestClient
+from app.main import add_note, filter_by_date, remove_note, NoteIn, app
+
+client = TestClient(app)
+
+
+def test_post_note():
+    response = client.post("/notes", json={"text": "hello", "date": "2026-04-12"})
+    assert response.status_code == 201
+    assert response.json() == {"text": "hello", "date": "2026-04-12"}
 
 
 def test_add_note():
