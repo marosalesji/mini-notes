@@ -1,0 +1,28 @@
+name: deploy
+
+on:
+  workflow_run:
+    workflows: [delivery]
+    types: [completed]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Deploy to EC2
+        env:
+          EC2_IP: ${{ secrets.EC2_IP }}
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/notes-api:latest
+        run: |
+          echo "$SSH_KEY" > key.pem
+          chmod 400 key.pem
+          ssh -o StrictHostKeyChecking=no -i key.pem ubuntu@$EC2_IP << EOF
+            docker pull $IMAGE
+            docker stop notes-api || true
+            docker rm notes-api || true
+            docker run -d --name notes-api -p 8000:8000 $IMAGE
+          EOF
+          rm -f key.pem
