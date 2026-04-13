@@ -40,3 +40,16 @@ def create_note(note: NoteIn):
     if not note.text.strip():
         raise HTTPException(status_code=422, detail="text must not be empty")
     return add_note(notes, note)
+
+
+def remove_note(notes: list, index: int):
+    if index < 0 or index >= len(notes):
+        return False
+    notes.pop(index)
+    return True
+
+
+@app.delete("/notes/{index}", status_code=204)
+def delete_note(index: int):
+    if not remove_note(notes, index):
+        raise HTTPException(status_code=404, detail="note not found")
